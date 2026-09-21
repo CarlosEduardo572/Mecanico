@@ -2,6 +2,7 @@
 Trabalho de Proj
 
 Diagrama v1
+<<<<<<< HEAD
 ![Diagrama de Classes](https://i.postimg.cc/pLBGYwqb/Diagrama-V1.jpg)
 
 Diagrama v2
