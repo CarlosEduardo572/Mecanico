@@ -7,7 +7,7 @@ class OrdemServicoCreate(BaseModel):
     valor: float
 
 class OrdemServicoUpdateStatus(BaseModel):
-    status: str  # Ex: Aberta, Em Andamento, Concluida
+    status: str
 
 class OrdemServicoResponse(BaseModel):
     id: int

@@ -1,70 +1,45 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+import requests
 
-import models
-import schemas
+import models, schemas
 from database import engine, SessionLocal
 
-# Cria as tabelas no arquivo oficina.db automaticamente ao iniciar
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    title="Microsserviço de Ordens de Serviço e Notificações",
-    description="API responsável pelo gerenciamento de OS e alertas da oficina mecânica.",
-    version="1.0.0"
-)
+app = FastAPI(title="Microsserviço de Ordens de Serviço")
 
-# Abre e fecha a conexão com o banco de dados a cada requisição
 def get_db():
     db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    try: yield db
+    finally: db.close()
 
-@app.post("/ordens", response_model=schemas.OrdemServicoResponse, status_code=201, tags=["Ordens de Serviço"])
+def notificar(ordem_id: int, cliente_nome: str, mensagem: str):
+    try:
+        # Envia os dados para a porta 8002 onde estará o serviço de notificações
+        requests.post("http://127.0.0.1:8002/notificacoes", json={
+            "ordem_id": ordem_id,
+            "cliente_nome": cliente_nome,
+            "mensagem": mensagem
+        })
+    except:
+        print("[AVISO] Serviço de notificações fora do ar.")
+
+@app.post("/ordens", response_model=schemas.OrdemServicoResponse)
 def criar_ordem(ordem: schemas.OrdemServicoCreate, db: Session = Depends(get_db)):
-    nova_ordem = models.OrdemServico(
-        cliente_nome=ordem.cliente_nome,
-        placa_veiculo=ordem.placa_veiculo,
-        descricao_servico=ordem.descricao_servico,
-        valor=ordem.valor,
-        status="Aberta"
-    )
+    nova_ordem = models.OrdemServico(**ordem.model_dump(), status="Aberta")
     db.add(nova_ordem)
     db.commit()
     db.refresh(nova_ordem)
+    notificar(nova_ordem.id, nova_ordem.cliente_nome, f"OS #{nova_ordem.id} aberta com sucesso.")
     return nova_ordem
 
-@app.get("/ordens", response_model=List[schemas.OrdemServicoResponse], tags=["Ordens de Serviço"])
-def listar_ordens(db: Session = Depends(get_db)):
-    return db.query(models.OrdemServico).all()
-
-@app.get("/ordens/{ordem_id}", response_model=schemas.OrdemServicoResponse, tags=["Ordens de Serviço"])
-def buscar_ordem(ordem_id: int, db: Session = Depends(get_db)):
-    ordem = db.query(models.OrdemServico).filter(models.OrdemServico.id == ordem_id).first()
-    if not ordem:
-        raise HTTPException(status_code=404, detail="Ordem de Serviço não encontrada")
-    return ordem
-
-@app.patch("/ordens/{ordem_id}/status", response_model=schemas.OrdemServicoResponse, tags=["Ordens de Serviço"])
+@app.patch("/ordens/{ordem_id}/status", response_model=schemas.OrdemServicoResponse)
 def atualizar_status(ordem_id: int, dados: schemas.OrdemServicoUpdateStatus, db: Session = Depends(get_db)):
     ordem = db.query(models.OrdemServico).filter(models.OrdemServico.id == ordem_id).first()
-    if not ordem:
-        raise HTTPException(status_code=404, detail="Ordem de Serviço não encontrada")
-    
+    if not ordem: raise HTTPException(status_code=404, detail="Não encontrada")
     ordem.status = dados.status
     db.commit()
-    db.refresh(ordem)
+    notificar(ordem.id, ordem.cliente_nome, f"Status da OS #{ordem.id} mudou para: {ordem.status}")
     return ordem
-
-@app.delete("/ordens/{ordem_id}", tags=["Ordens de Serviço"])
-def deletar_ordem(ordem_id: int, db: Session = Depends(get_db)):
-    ordem = db.query(models.OrdemServico).filter(models.OrdemServico.id == ordem_id).first()
-    if not ordem:
-        raise HTTPException(status_code=404, detail="Ordem de Serviço não encontrada")
-    
-    db.delete(ordem)
-    db.commit()
-    return {"mensagem": f"Ordem de Serviço #{ordem_id} removida com sucesso!"}

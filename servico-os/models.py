@@ -9,4 +9,4 @@ class OrdemServico(Base):
     placa_veiculo = Column(String, index=True)
     descricao_servico = Column(String)
     valor = Column(Float)
-    status = Column(String, default="Aberta")  # Ex: Aberta, Em Andamento, Concluida
+    status = Column(String, default="Aberta")
