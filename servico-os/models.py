@@ -5,6 +5,7 @@ class OrdemServico(Base):
     __tablename__ = "ordens_servico"
 
     id = Column(Integer, primary_key=True, index=True)
+    cliente_id = Column(Integer, index=True) # <-- Campo novo adicionado!
     cliente_nome = Column(String, index=True)
     placa_veiculo = Column(String, index=True)
     descricao_servico = Column(String)
