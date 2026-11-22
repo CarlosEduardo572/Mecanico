@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
 class OrdemServicoCreate(BaseModel):
+    cliente_id: int
     cliente_nome: str
     placa_veiculo: str
     descricao_servico: str
@@ -11,6 +12,7 @@ class OrdemServicoUpdateStatus(BaseModel):
 
 class OrdemServicoResponse(BaseModel):
     id: int
+    cliente_id: int
     cliente_nome: str
     placa_veiculo: str
     descricao_servico: str
@@ -18,3 +20,8 @@ class OrdemServicoResponse(BaseModel):
     status: str
 
     model_config = ConfigDict(from_attributes=True)
+
+# ---> NOVO ESQUEMA PARA ADICIONAR PEÇAS <---
+class UsoDePeca(BaseModel):
+    peca_id: int
+    quantidade: int
