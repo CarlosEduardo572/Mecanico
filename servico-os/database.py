@@ -1,12 +1,15 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Cria um arquivo de banco de dados local chamado oficina.db
-SQLALCHEMY_DATABASE_URL = "sqlite:///./oficina.db"
+URL = os.getenv("DATABASE_URL", "sqlite:///./oficina.db")
+if URL.startswith("postgres://"):
+    URL = URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif URL.startswith("postgresql://"):
+    URL = URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+args = {"check_same_thread": False} if URL.startswith("sqlite") else {}
+engine = create_engine(URL, connect_args=args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
