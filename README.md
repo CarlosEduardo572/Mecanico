@@ -79,6 +79,8 @@ Mecanico/
 
 ## 📋 Serviço de Ordens de Serviço (`servico-os`)
 
+> 🐍 Desenvolvido por **Carlos**
+
 Cuida do ciclo de vida de uma ordem de serviço. Antes de abrir uma ordem, **valida o cliente** no serviço de Clientes; ao usar uma peça, **baixa o estoque** no Catálogo; e a cada evento **envia uma notificação**.
 
 | Método | Rota | Descrição |
@@ -100,6 +102,8 @@ curl -X POST https://servico-os.onrender.com/ordens \
 
 ## 🔔 Serviço de Notificações (`notificacoes`)
 
+> 🐍 Desenvolvido por **Carlos**
+
 Guarda as mensagens geradas pelo serviço de Ordens (ordem aberta, status alterado, peça usada).
 
 | Método | Rota | Descrição |
@@ -109,11 +113,76 @@ Guarda as mensagens geradas pelo serviço de Ordens (ordem aberta, status altera
 
 ---
 
+## 👤 Serviço de Cliente e Veículos (`clientes-veiculos`)
+
+> ☕ Desenvolvido por **Letícia**
+
+Cadastro dos clientes da oficina e dos veículos de cada cliente. É um **provedor**: o serviço de Ordens de Serviço consulta o cliente aqui antes de abrir uma ordem. Cada veículo pertence a um cliente (`cliente_id`).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/clientes` | Cadastra um cliente |
+| `GET` | `/clientes` | Lista os clientes |
+| `GET` | `/clientes/{id}` | Consulta um cliente (`404` se não existir) |
+| `PUT` | `/clientes/{id}` | Atualiza o cadastro (também usado para **inativar**, com `ativo: false`) |
+| `POST` | `/clientes/{id}/veiculos` | Cadastra um veículo do cliente (`404` se o cliente não existir) |
+| `GET` | `/clientes/{id}/veiculos` | Lista os veículos do cliente |
+| `GET` | `/veiculos/{id}` | Consulta um veículo |
+
+**Exemplo: cadastrar um cliente**
+
+```bash
+curl -X POST https://clientes-veiculos.onrender.com/clientes \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Maria Silva","cpf":"123.456.789-00","telefone":"85999990000","email":"maria@email.com"}'
+```
+
+---
+
+## 📦 Serviço de Catálogo e Estoque (`catalogo-estoque`)
+
+> ☕ Desenvolvido por **Letícia**
+
+O que a oficina vende e consome: peças (com controle de estoque) e serviços. É um **provedor**: o serviço de Ordens de Serviço baixa o estoque aqui quando uma peça é usada.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/pecas` | Cadastra uma peça |
+| `GET` | `/pecas` | Lista as peças |
+| `GET` | `/pecas/{id}` | Consulta uma peça |
+| `PUT` | `/pecas/{id}` | Atualiza nome, código, preço, estoque mínimo e situação (**não altera a quantidade em estoque**) |
+| `GET` | `/pecas/{id}/estoque` | Consulta a quantidade e se está abaixo do mínimo |
+| `PATCH` | `/pecas/{id}/estoque` | Ajusta o estoque: `quantidade` negativa dá baixa, positiva repõe (`409` se o estoque for insuficiente) |
+| `POST` | `/servicos` | Cadastra um serviço |
+| `GET` | `/servicos` | Lista os serviços |
+| `GET` | `/servicos/{id}` | Consulta um serviço |
+
+**Exemplo: dar baixa de 2 unidades no estoque**
+
+```bash
+curl -X PATCH https://catalogo-estoque.onrender.com/pecas/1/estoque \
+  -H "Content-Type: application/json" \
+  -d '{"quantidade":-2}'
+```
+
+---
+
 ## 🧭 Decisões de projeto (rotas que não foram criadas)
+
+**Ordens de Serviço e Notificações (Carlos)**
 
 - **`DELETE /ordens/{id}`**: a ordem é um registro histórico e financeiro; o cancelamento é feito pelo status.
 - **`GET /ordens/{id}` e `PUT /ordens/{id}`**: o front-end já recebe tudo na listagem e só altera o status.
 - **`PUT` e `DELETE` em notificações**: são um registro do que foi enviado e não devem ser alterados.
+
+**Cliente e Veículos e Catálogo e Estoque (Letícia)**
+
+- **`DELETE` de cliente, peça e serviço**: eles aparecem em ordens antigas; o correto é **inativar** (`ativo = false`) para não perder o histórico.
+- **`PUT /pecas/{id}` não mexe no estoque**: a quantidade só muda pelo `PATCH /pecas/{id}/estoque`, para que editar um preço não sobrescreva o estoque por engano.
+- **Relatórios de estoque**: fora do escopo desta etapa.
+
+**Para todos**
+
 - **Autenticação**: fora do escopo desta etapa.
 
 ---
