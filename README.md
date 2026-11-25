@@ -3,7 +3,6 @@
 Trabalho 4 de Arquitetura de Sistemas: uma oficina mecânica dividida em **quatro microsserviços** independentes (Python e Java), cada um com o **seu próprio banco de dados**, conectados por um **front-end** em HTML e JavaScript e publicados na **nuvem**.
 
 [![Site](https://img.shields.io/badge/site-online-1565C0?style=for-the-badge)](https://oficina-frontend-sc9n.onrender.com)
-[![Vídeo](https://img.shields.io/badge/apresentação-YouTube-C62828?style=for-the-badge)](https://youtu.be/qtWOPADaR4w)
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
